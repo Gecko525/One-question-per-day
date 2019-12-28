@@ -3,7 +3,9 @@ function deepCopy(obj, cache=[]) {
     if (obj === null || typeof obj !== 'object') {
         return obj;
     }
-   
+    // 判断是否是时间或正则对象
+    if(obj.constructor === Date) return new Date(obj);
+    if(obj.constructor === RegExp) return new RegExp(obj);
     // 如果传入的对象与缓存的相等, 则递归结束, 这样防止循环
     /**
      * 类似下面这种
