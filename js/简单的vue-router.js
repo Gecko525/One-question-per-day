@@ -14,20 +14,24 @@ class VueRouter {
   }
 
   init () {
-    function setCurrent () {
-      if (this.mode === 'hash') {
-        if (!window.location.hash) {
-          window.location.hash = '/'
-        }
-        this.routeState.current = window.location.hash.slice(1)
-      } else {
-        this.routeState.current = window.location.pathname
-      }
-    }
-
     // 监听路由改变，hash模式用hashchange事件，history模式用popstate事件
-    window.addEventListener('load', setCurrent.bind(this))
-    window.addEventListener(this.mode === 'hash' ? 'hashchange' : 'popstate', setCurrent.bind(this))
+    window.addEventListener('load', () => {
+      this.setCurrent()
+    })
+    window.addEventListener(this.mode === 'hash' ? 'hashchange' : 'popstate', () => {
+      this.setCurrent()
+    })
+  }
+
+  setCurrent () {
+    if (this.mode === 'hash') {
+      if (!window.location.hash) {
+        window.location.hash = '/'
+      }
+      this.routeState.current = window.location.hash.slice(1)
+    } else {
+      this.routeState.current = window.location.pathname
+    }
   }
 
   // 将路由数组转换成{path: componet}格式
