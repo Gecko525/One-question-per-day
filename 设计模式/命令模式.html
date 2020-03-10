@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    #content {
+      width: 100%;
+      height: 100px;
+      margin: 100px 0;
+      position: relative;
+    }
+    #move {
+      width: 100px;
+      height: 100px;
+      background: red;
+      position: absolute;
+      left: 0px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <button id="goLeft">左移</button>
+    <input id="val" type="number">
+    <button id="goRight">右移</button>
+    <p>移动步数：<span id="step">0</span></p>
+  </div>
+  <div>
+      <button id="goBack">后退</button>
+      <button id="goFront">前进</button>
+    </div>
+  <div id="content">
+    <div id="move"></div>
+  </div>
+  
+
+  <script>
+  
+    // 命令模式：无需了解内部调用细节，只需给出指令即可得到结果
+
+    var move = (function () {
+      // 移动div
+      function moveDiv(manager, dom, textDom) {
+        if (!(manager instanceof StateManager)) {
+          throw new Error('manager 应该为一个StateManager对象')
+        }
+        var state = manager.getState()
+        var oVal = parseFloat(dom.style.left || '0')
+        if (dom && state !== oVal) {
+          console.log('移动 ' + (state - oVal))
+          dom.style.left = state + 'px'
+        }
+        if (textDom) {
+          textDom.innerText = manager.now
+        }
+      }
+
+      //状态管理对象
+      function StateManager(start) {
+        this.stateArr = []; // 每次移动后的left值
+        start = typeof start === 'number' ? start : 0
+        this.stateArr.push(start)
+        this.now = 0;
+      }
+      
+      StateManager.prototype.pushState = function (state) {
+        if (state) {
+          var oVal = this.stateArr[this.now]
+          this.stateArr.push(oVal + state)
+          this.now = this.stateArr.length - 1
+        }
+      }
+      StateManager.prototype.goBack = function () {
+        if (this.now > 0) {
+          this.now--
+        }
+      }
+      StateManager.prototype.goFront = function () {
+        if (this.now < this.stateArr.length - 1) {
+          this.now++
+        }
+      }
+      StateManager.prototype.getState = function () {
+        return this.stateArr[this.now]
+      }
+      var manager = null
+      // 策略模式，将方法封装进对象，可直接通过key值调用，无需 if else 判断
+      var funs = {
+        left: function (val) {
+          manager.pushState(-val)
+        },
+        right: function (val) {
+          manager.pushState(val)
+        },
+        back: function () {
+          manager.goBack()
+        },
+        front: function () {
+          manager.goFront()
+        }
+      }
+      
+      return {
+        moveDom: null,
+        stepDom: null,
+        init: function (start, move, step) {
+          if (!move) {
+            throw new Error('要移动的元素不可为' + typeof move)
+          }
+          manager = new StateManager(start)
+          moveDiv(manager, move, step)
+          this.moveDom = move
+          this.stepDom = step
+        },
+        excute: function (commander, val) {
+          var coms = ['left', 'right', 'back', 'front']
+          if (typeof commander !== 'string' || coms.indexOf(commander) === -1) {
+            throw new Error('commonder必须为string类型，且只能为' + coms.join('、') + '中的一个')
+          }
+          if ((commander === 'left' || commander === 'right') && typeof val !== 'number') {
+            throw new Error('val参数应为number类型')
+          }
+          if (!manager) {
+            throw('请先执行init函数绑定要移动的dom')
+          }
+          funs[commander](val)
+          moveDiv(manager, this.moveDom, this.stepDom)
+        }
+      }
+    })()
+
+    var domArr = ['goLeft', 'goRight', 'goBack', 'goFront', 'val', 'move', 'step']
+    var domObj = domArr.reduce(function (pre, id) {
+      pre[id] = document.getElementById(id)
+      return pre
+    }, {})
+
+    move.init(100, domObj.move, domObj.step)
+    domObj.goLeft.onclick = function () {
+      move.excute('left', parseInt(domObj.val.value))
+    }
+    domObj.goRight.onclick = function () {
+      move.excute('right', parseInt(domObj.val.value))
+    }
+    domObj.goBack.onclick = function () {
+      move.excute('back')
+    }
+    domObj.goFront.onclick = function () {
+      move.excute('front') 
+    }
+  </script>
+</body>
+</html>
